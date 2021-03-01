@@ -5,13 +5,12 @@ This project was developed to allow the usage of a Raspberry PI PICO within a ga
 
 # How it works
 The gameboy has 16 address pins and 8 data pins that need to be mapped to the picos IO pins. As well as this, we need to know if we are reading and wrighting data between the PICO and GB. The gameboy provides a Read and Wright pin, but using boolean logic, we can get away with using just WR as if its not set we must be reading data.
-Gameboy Address Pins 0-15 | PICO 0-15
+Gameboy | PICO
 --- | ---
-Gameboy Data Pins 0-6 | PICO 16-22
---- | ---
-Gameboy Data Pin 7 | PICO 26
---- | ---
-Gameboy WR Pin | PICO 27
+Address Pins 0-15 | 0-15
+Data Pins 0-6 | 16-22
+Data Pin 7 | 26
+WR Pin | 27
 
 # How the repo works
 ## Make Gameboy Menu
@@ -38,3 +37,6 @@ Also thanks to Gekkio for debug breakout cart, [GB-BRK-CART](https://github.com/
 * RTC
 * Passing game names dynamicly over to menu
 * External memory support (EG, SD Card)
+
+
+![Raspberry PI Pico running custom menu](https://raw.githubusercontent.com/0xen/PICO-GB/main/etc/running.jpg)
