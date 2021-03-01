@@ -1,0 +1,10 @@
+.codeblocks/*
+.vs*/
+*.filters
+build/
+Roms/*.c
+Roms/*.gb
+CMakeFiles
+CMakeCache.txt
+cmake_install.cmake
+Makefile
