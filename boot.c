@@ -22,9 +22,15 @@ extern unsigned int DRMARIOCodeSize;
 extern const unsigned char SUPERMARIOLANDCode[];
 extern unsigned int SUPERMARIOLANDCodeSize;
 
+const uint16_t romCount = 3;
+const unsigned char* romInstances[] = {
+    TETRISCode,
+    DRMARIOCode,
+    SUPERMARIOLANDCode
+};
 
 void MainMenu();
-void GameRun();
+void GameRunRomOnly();
 
 #define BANK_SIZE 0x4000
 
@@ -151,19 +157,20 @@ void LoadGame(const unsigned char* data)
         offset+=BANK_SIZE;
     }
 
-    GameRun();
+
+    switch(mMBCType)
+    {
+        case 0x0: // ROM Only
+            GameRunRomOnly();
+        break;
+    }
 }
 
 inline void SelectGame(uint8_t data)
 {
-    if(data == 1)
+    if(data >0)
     {
-        LoadGame(TETRISCode);
-        return;
-    }
-    if(data == 2)
-    {
-        LoadGame(DRMARIOCode);
+        LoadGame(romInstances[data-1]);
         return;
     }
 }
@@ -183,17 +190,17 @@ void MainMenu()
     static uint16_t lastAddress = 0;
     uint16_t address = 0;
     uint32_t outputData = 0;
+    uint8_t* bankPtr = pMemoryBanks;
     ResetConsole();
     while(true)
     {   
         address = gpio_get_all() & 0b1111111111111111;
         if(address!=lastAddress)
         {
+            lastAddress = address;
             if(!gpio_get(WR_PIN))
             {
                 dataWrite();
-
-                lastAddress = address;
 
                 outputData = 0;
 
@@ -211,7 +218,7 @@ void MainMenu()
     }
 }
  
-void GameRun()
+void GameRunRomOnly()
 {
     ResetConsole();
     
@@ -225,11 +232,10 @@ void GameRun()
         address = gpio_get_all() & 0b1111111111111111;
         if(address!=lastAddress)
         {
+            lastAddress = address;
             if(!gpio_get(WR_PIN))
             {
                 dataWrite();
-
-                lastAddress = address;
 
                 outputData = 0;
 

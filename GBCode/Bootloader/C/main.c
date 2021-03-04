@@ -26,7 +26,7 @@ unsigned char fontRemapping[] = {
 extern const unsigned char RomResetCode[];
 extern unsigned int RomResetCodeSize;
 
-UINT8 gameCount = 2;
+UINT8 gameCount = 3;
 UINT8 gameCursor = 0;
 
 UBYTE joypadData;
@@ -118,6 +118,7 @@ void main()
     BackgroundPrintf( 8, 0, "Games" );
     BackgroundPrintf( 1, 1, "TETRIS" );
     BackgroundPrintf( 1, 2, "DR MARIO" );
+    BackgroundPrintf( 1, 3, "Supper Mario" );
     RenderCursor();
 
 
