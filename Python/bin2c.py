@@ -5,6 +5,8 @@ import sys
 def bin2c(filename, arrayName):
     with open(filename, "rb") as f:
         data = f.read()
+        
+        sys.stdout.write("const unsigned int {:s}Size = {:d};\n".format(arrayName, f.tell()))
 
         sys.stdout.write("const unsigned char {:s}[] = {{\n".format(arrayName))
         j = 0
@@ -19,7 +21,6 @@ def bin2c(filename, arrayName):
             sys.stdout.write("\n")    
         sys.stdout.write("};\n")
 
-        sys.stdout.write("const unsigned int {:s}Size = {:d};\n".format(arrayName, f.tell()))
 
     return
 

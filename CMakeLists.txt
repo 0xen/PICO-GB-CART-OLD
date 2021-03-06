@@ -35,6 +35,7 @@ Roms/TETRIS.c
 Roms/ZELDA.c
 Roms/ALLEYWAY.c
 Roms/SUPERMARIOLAND.c
+Roms/MARIOANDYOSHI.c
 )
  
 set(headers
