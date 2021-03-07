@@ -29,6 +29,25 @@ const unsigned char* romInstances[] = {
     TETRISCode,
     DRMARIOCode,
     SUPERMARIOLANDCode
+    //MARIOANDYOSHICode
+};
+
+
+enum vreg_voltage {
+    VREG_VOLTAGE_0_85 = 0b0110,    ///< 0.85v
+    VREG_VOLTAGE_0_90 = 0b0111,    ///< 0.90v
+    VREG_VOLTAGE_0_95 = 0b1000,    ///< 0.95v
+    VREG_VOLTAGE_1_00 = 0b1001,    ///< 1.00v
+    VREG_VOLTAGE_1_05 = 0b1010,    ///< 1.05v
+    VREG_VOLTAGE_1_10 = 0b1011,    ///< 1.10v
+    VREG_VOLTAGE_1_15 = 0b1100,    ///< 1.15v
+    VREG_VOLTAGE_1_20 = 0b1101,    ///< 1.20v
+    VREG_VOLTAGE_1_25 = 0b1110,    ///< 1.25v
+    VREG_VOLTAGE_1_30 = 0b1111,    ///< 1.30v
+
+    VREG_VOLTAGE_MIN = VREG_VOLTAGE_0_85,      ///< Always the minimum possible voltage
+    VREG_VOLTAGE_DEFAULT = VREG_VOLTAGE_1_10,  ///< Default voltage on power up.
+    VREG_VOLTAGE_MAX = VREG_VOLTAGE_1_30,      ///< Always the maximum possible voltage
 };
 
 void MainMenu();
@@ -43,7 +62,7 @@ void GameRunMBC1AndRam();
 #define RESET_PIN 28
 #define WR_PIN 27
 
-uint8_t pMemoryBanks[4 * 0x8000];
+uint8_t pMemoryBanks[4 * 0x4000];
 
 void InitOutput(int pin)
 {
@@ -69,12 +88,12 @@ void ResetConsole()
 uint32_t dataPinMask = 0b100011111110000000000000000;
 uint32_t addressPinMask = 0b1111111111111111;
 
-inline static void dataRead()
+void dataRead()
 {
     gpio_set_dir_in_masked(dataPinMask);
 }
 
-inline static void dataWrite()
+void dataWrite()
 {
     gpio_set_dir_out_masked(dataPinMask);
 }
@@ -182,9 +201,9 @@ void LoadGame(const unsigned char* data)
     }
 }
 
-inline void SelectGame(uint8_t data)
-{
-    if(data >0)
+void SelectGame(uint8_t data)
+{  
+    if(data >0 && data <= romCount)
     {
         LoadGame(romInstances[data-1]);
         return;
@@ -211,11 +230,13 @@ void MainMenu()
     while(true)
     {   
         address = gpio_get_all() & 0b1111111111111111;
-        if(address!=lastAddress)
+
+        
+        if(!gpio_get(WR_PIN))
         {
-            lastAddress = address;
-            if(!gpio_get(WR_PIN))
+            if(address!=lastAddress)
             {
+                lastAddress = address;
                 dataWrite();
 
                 outputData = 0;
@@ -225,17 +246,18 @@ void MainMenu()
 
                 gpio_put_masked(dataPinMask, outputData);
             }
-            else
-            {
-                dataRead();
-                SelectGame(ReadInputData());
-            }
+        }
+        else
+        {
+            dataRead();
+            SelectGame(ReadInputData());
         }
     }
 }
  
 void GameRunRomOnly()
 {
+    set_sys_clock_khz(270000, true);
     ResetConsole();
     
     static uint16_t lastAddress = 0;
@@ -266,6 +288,8 @@ void GameRunRomOnly()
 
 void GameRunMBC1()
 {
+    
+
     ResetConsole();
     
     static uint16_t lastAddress = 0;
@@ -283,63 +307,65 @@ void GameRunMBC1()
     while(true)
     {   
         address = gpio_get_all() & 0b1111111111111111;
-        if(address!=lastAddress)
+        
+        if(!gpio_get(WR_PIN))
         {
-            lastAddress = address;
-            if(!gpio_get(WR_PIN))
+            if(address!=lastAddress)
             {
+                lastAddress = address;
                 dataWrite();
 
                 outputData = 0;
 
                 if(address >=0x4000)
                 {
-                    
                     address += bank_offset;
                 }
-                    outputData |= ((uint32_t)(currentBank[address]>>0)&0b1111111)<<16;
-                    outputData |= ((uint32_t)(currentBank[address]>>7)&0b1)<<26;
+
+                outputData |= ((uint32_t)(currentBank[address]>>0)&0b1111111)<<16;
+                outputData |= ((uint32_t)(currentBank[address]>>7)&0b1)<<26;
 
 
                 gpio_put_masked(dataPinMask, outputData);
             }
-            else
+        }
+        else
+        {
+            dataRead();
+            data = ReadInputData();
+
+            switch (address & 0xE000)
             {
-                dataRead();
-                data = ReadInputData();
-
-                switch (address & 0xE000)
-                {
                 case 0x2000:
-                    {
-                        //if (m_mode == 0)
-                        //{
-                        //    m_memory_bank = (data & 0x1F) | (m_rom_bank_high << 5);
-                        //}
-                        //else
-                        //{
-                            m_memory_bank = data & 0x1f;
-                        //}
-                        // If rom bank is set to 0x00,0x20,0x40,0x60 we incroment it
+                {
+                    //if (m_mode == 0)
+                    //{
+                    //    m_memory_bank = (data & 0x1F) | (m_rom_bank_high << 5);
+                    //}
+                    //else
+                    //{
+                        m_memory_bank = data & 0x1f;
+                    //}
+                    // If rom bank is set to 0x00,0x20,0x40,0x60 we incroment it
 
-                        //if (m_memory_bank == 0x00 || m_memory_bank == 0x20 ||
-                        //    m_memory_bank == 0x40 || m_memory_bank == 0x60)
-                        //    m_memory_bank++;
+                    //if (m_memory_bank == 0x00 || m_memory_bank == 0x20 ||
+                    //    m_memory_bank == 0x40 || m_memory_bank == 0x60)
+                    //    m_memory_bank++;
 
 
-                        m_memory_bank &= (mRomBankSize - 1);
-                        
-                        bank_offset = (m_memory_bank - 1) * 0x4000;
-                        //m_memory_bank--;
+                    m_memory_bank &= (mRomBankSize - 1);
+                    
+                    bank_offset = (m_memory_bank - 1) * 0x4000;
+                    //m_memory_bank--;
 
-                        //currentBank = &pMemoryBanks[0x8000 * m_memory_bank];
-                        //if(m_memory_bank!=1)
-                        //{
-                        //    gpio_put(25,1);
-                        //while(true){}
-                        //}
-                        break;
-                    }
+                    //currentBank = &pMemoryBanks[0x8000 * m_memory_bank];
+                    //if(m_memory_bank==3)
+                    //{
+                    //    gpio_put(25,1);
+                    //}
+                    //while(true){}
+                    break;
+                }
                 case 0x4000:
                 {
                     //m_rom_bank_high = data & 0x03;
@@ -355,10 +381,8 @@ void GameRunMBC1()
                     //currentBank = &pMemoryBanks[0x8000 * m_memory_bank];
                     break;
                 }
-                }
-
-
             }
+
         }
     }
 }
@@ -368,13 +392,14 @@ void GameRunMBC1AndRam(){}
 int main() {
     stdio_init_all();
 
-    set_sys_clock_khz(270000, true);
+    vreg_set_voltage(VREG_VOLTAGE_1_20);
+    sleep_ms(1000);
+    set_sys_clock_khz(360000, true);
 
     InitOutput(25);
 
     InitOutput(RESET_PIN);
     gpio_put(RESET_PIN, 1);
-
 
     InitInput(WR_PIN);
 

@@ -116,9 +116,9 @@ void main()
 
     
     BackgroundPrintf( 8, 0, "Games" );
-    BackgroundPrintf( 1, 1, "TETRIS" );
-    BackgroundPrintf( 1, 2, "DR MARIO" );
-    BackgroundPrintf( 1, 3, "Supper Mario" );
+    BackgroundPrintf( 1, 1, "Game 1" );
+    BackgroundPrintf( 1, 2, "Game 2" );
+    BackgroundPrintf( 1, 3, "Game 3" );
     RenderCursor();
 
 

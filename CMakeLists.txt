@@ -63,3 +63,4 @@ pico_add_extra_outputs(${project_name})
 example_auto_set_url(${project_name})
 
 
+pico_set_binary_type(${project_name} copy_to_ram)
