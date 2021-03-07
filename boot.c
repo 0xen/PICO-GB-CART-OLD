@@ -28,7 +28,8 @@ const uint16_t romCount = 3;
 const unsigned char* romInstances[] = {
     TETRISCode,
     DRMARIOCode,
-    SUPERMARIOLANDCode
+    SUPERMARIOLANDCode,
+    
     //MARIOANDYOSHICode
 };
 
@@ -62,7 +63,7 @@ void GameRunMBC1AndRam();
 #define RESET_PIN 28
 #define WR_PIN 27
 
-uint8_t pMemoryBanks[4 * 0x4000];
+uint8_t* pMemoryBanks = NULL;
 
 void InitOutput(int pin)
 {
@@ -127,7 +128,7 @@ bool mCartRamEnabled = false;
 
 uint8_t* mRam = NULL;
 
-void LoadGame(const unsigned char* data)
+void LoadGame(uint8_t* data)
 {
     // Load Header information
     mRomBankSize = data[ROM_SIZE];
@@ -181,10 +182,11 @@ void LoadGame(const unsigned char* data)
     //    offset+=BANK_SIZE;
     //}
 
-    for(uint32_t i = 0 ; i < BANK_SIZE * mRomBankSize; ++i)
-    {
-        pMemoryBanks[i] = data[i];
-    }
+    pMemoryBanks = data;
+    //for(uint32_t i = 0 ; i < BANK_SIZE * mRomBankSize; ++i)
+    //{
+    //    pMemoryBanks[i] = data[i];
+    //}
 
     switch(mMBCType)
     {
@@ -212,11 +214,7 @@ void SelectGame(uint8_t data)
 
 void LoadBootrom()
 {
-    for(uint32_t j = 0 ; j < bootloaderCodeSize; ++j)
-    {
-        pMemoryBanks[j] = bootloaderCode[j];
-    }
-
+    pMemoryBanks = bootloaderCode;
 }
 
 void MainMenu()

@@ -49,63 +49,101 @@
       000000 F8 02                   49 	ldhl	sp,	#2
       000002 7E                      50 	ld	a, (hl)
       000003 3C                      51 	inc	a
-      000004 21 00 00                52 	ld	hl, #0x0000
-      000007 77                      53 	ld	(hl), a
-                                     54 ;./C/romreset.c:10: (*(UBYTE *)(0x0000)) = data + 1;
-      000008 6C                      55 	ld	l, h
-      000009 77                      56 	ld	(hl), a
-                                     57 ;./C/romreset.c:11: (*(UBYTE *)(0x0000)) = data + 1;
-      00000A 6C                      58 	ld	l, h
-      00000B 77                      59 	ld	(hl), a
-                                     60 ;./C/romreset.c:12: (*(UBYTE *)(0x0000)) = data + 1;
-      00000C 6C                      61 	ld	l, h
-      00000D 77                      62 	ld	(hl), a
-                                     63 ;./C/romreset.c:13: (*(UBYTE *)(0x0000)) = data + 1;
-      00000E 6C                      64 	ld	l, h
-      00000F 77                      65 	ld	(hl), a
-                                     66 ;./C/romreset.c:14: (*(UBYTE *)(0x0000)) = data + 1;
-      000010 6C                      67 	ld	l, h
-      000011 77                      68 	ld	(hl), a
-                                     69 ;./C/romreset.c:15: (*(UBYTE *)(0x0000)) = data + 1;
-      000012 6C                      70 	ld	l, h
-      000013 77                      71 	ld	(hl), a
-                                     72 ;./C/romreset.c:16: (*(UBYTE *)(0x0000)) = data + 1;
-      000014 6C                      73 	ld	l, h
-      000015 77                      74 	ld	(hl), a
-                                     75 ;./C/romreset.c:17: (*(UBYTE *)(0x0000)) = data + 1;
-      000016 6C                      76 	ld	l, h
-      000017 77                      77 	ld	(hl), a
-                                     78 ;./C/romreset.c:18: (*(UBYTE *)(0x0000)) = data + 1;
-      000018 6C                      79 	ld	l, h
-      000019 77                      80 	ld	(hl), a
-                                     81 ;./C/romreset.c:19: (*(UBYTE *)(0x0000)) = data + 1;
-      00001A 6C                      82 	ld	l, h
-      00001B 77                      83 	ld	(hl), a
-                                     84 ;./C/romreset.c:20: (*(UBYTE *)(0x0000)) = data + 1;
-      00001C 6C                      85 	ld	l, h
-      00001D 77                      86 	ld	(hl), a
-                                     87 ;./C/romreset.c:21: (*(UBYTE *)(0x0000)) = data + 1;
-      00001E 6C                      88 	ld	l, h
-      00001F 77                      89 	ld	(hl), a
-                                     90 ;./C/romreset.c:22: (*(UBYTE *)(0x0000)) = data + 1;
-      000020 6C                      91 	ld	l, h
-      000021 77                      92 	ld	(hl), a
-                                     93 ;./C/romreset.c:23: (*(UBYTE *)(0x0000)) = data + 1;
-      000022 6C                      94 	ld	l, h
-      000023 77                      95 	ld	(hl), a
-                                     96 ;./C/romreset.c:24: (*(UBYTE *)(0x0000)) = data + 1;
-      000024 6C                      97 	ld	l, h
-      000025 77                      98 	ld	(hl), a
-                                     99 ;./C/romreset.c:44: }
-      000026 C9                     100 	ret
-                                    101 ;./C/romreset.c:46: void reset_gameboy() __naked {
-                                    102 ;	---------------------------------
-                                    103 ; Function reset_gameboy
-                                    104 ; ---------------------------------
-      000027                        105 _reset_gameboy::
-                                    106 ;./C/romreset.c:50: __endasm;
-      000027 FAr00r00               107 	ld	a,(_my_cpu)
-      00002A C3 00 01               108 	jp	0x100
-                                    109 ;./C/romreset.c:51: }
-                                    110 	.area _RAMCODE
-                                    111 	.area _CABS (ABS)
+      000004 EA 00 00                52 	ld	(#0x0000),a
+                                     53 ;./C/romreset.c:13: for(UWORD i = 0 ; i < 32*32; ++i)
+      000007 01 00 98                54 	ld	bc, #0x9800
+      00000A 11 00 00                55 	ld	de, #0x0000
+      00000D                         56 00124$:
+      00000D 7A                      57 	ld	a, d
+      00000E D6 04                   58 	sub	a, #0x04
+      000010 30 0C                   59 	jr	NC, 00105$
+                                     60 ;./C/romreset.c:15: while(STAT_REG & 0b10);
+      000012                         61 00101$:
+      000012 F0r00                   62 	ldh	a, (_STAT_REG+0)
+      000014 CB 4F                   63 	bit	1, a
+      000016 20 FA                   64 	jr	NZ, 00101$
+                                     65 ;./C/romreset.c:16: *address++ = 0;
+      000018 AF                      66 	xor	a, a
+      000019 02                      67 	ld	(bc), a
+      00001A 03                      68 	inc	bc
+                                     69 ;./C/romreset.c:13: for(UWORD i = 0 ; i < 32*32; ++i)
+      00001B 13                      70 	inc	de
+      00001C 18 EF                   71 	jr	00124$
+                                     72 ;./C/romreset.c:20: while((STAT_REG & 0b11) == 1);
+      00001E                         73 00105$:
+      00001E F0r00                   74 	ldh	a, (_STAT_REG+0)
+      000020 E6 03                   75 	and	a, #0x03
+      000022 47                      76 	ld	b, a
+      000023 0E 00                   77 	ld	c, #0x00
+      000025 78                      78 	ld	a, b
+      000026 3D                      79 	dec	a
+      000027 B1                      80 	or	a, c
+      000028 28 F4                   81 	jr	Z, 00105$
+                                     82 ;./C/romreset.c:21: while((STAT_REG & 0b11) != 1);
+      00002A                         83 00108$:
+      00002A F0r00                   84 	ldh	a, (_STAT_REG+0)
+      00002C E6 03                   85 	and	a, #0x03
+      00002E 47                      86 	ld	b, a
+      00002F 0E 00                   87 	ld	c, #0x00
+      000031 78                      88 	ld	a, b
+      000032 3D                      89 	dec	a
+      000033 B1                      90 	or	a, c
+      000034 20 F4                   91 	jr	NZ, 00108$
+                                     92 ;./C/romreset.c:22: while((STAT_REG & 0b11) == 1);
+      000036                         93 00111$:
+      000036 F0r00                   94 	ldh	a, (_STAT_REG+0)
+      000038 E6 03                   95 	and	a, #0x03
+      00003A 47                      96 	ld	b, a
+      00003B 0E 00                   97 	ld	c, #0x00
+      00003D 78                      98 	ld	a, b
+      00003E 3D                      99 	dec	a
+      00003F B1                     100 	or	a, c
+      000040 28 F4                  101 	jr	Z, 00111$
+                                    102 ;./C/romreset.c:23: while((STAT_REG & 0b11) != 1);
+      000042                        103 00114$:
+      000042 F0r00                  104 	ldh	a, (_STAT_REG+0)
+      000044 E6 03                  105 	and	a, #0x03
+      000046 47                     106 	ld	b, a
+      000047 0E 00                  107 	ld	c, #0x00
+      000049 78                     108 	ld	a, b
+      00004A 3D                     109 	dec	a
+      00004B B1                     110 	or	a, c
+      00004C 20 F4                  111 	jr	NZ, 00114$
+                                    112 ;./C/romreset.c:24: while((STAT_REG & 0b11) == 1);
+      00004E                        113 00117$:
+      00004E F0r00                  114 	ldh	a, (_STAT_REG+0)
+      000050 E6 03                  115 	and	a, #0x03
+      000052 47                     116 	ld	b, a
+      000053 0E 00                  117 	ld	c, #0x00
+      000055 78                     118 	ld	a, b
+      000056 3D                     119 	dec	a
+      000057 B1                     120 	or	a, c
+      000058 28 F4                  121 	jr	Z, 00117$
+                                    122 ;./C/romreset.c:25: while((STAT_REG & 0b11) != 1);
+      00005A                        123 00120$:
+      00005A F0r00                  124 	ldh	a, (_STAT_REG+0)
+      00005C E6 03                  125 	and	a, #0x03
+      00005E 47                     126 	ld	b, a
+      00005F 0E 00                  127 	ld	c, #0x00
+      000061 78                     128 	ld	a, b
+      000062 3D                     129 	dec	a
+      000063 B1                     130 	or	a, c
+      000064 20 F4                  131 	jr	NZ, 00120$
+                                    132 ;./C/romreset.c:27: my_cpu = cpu;
+      000066 F8 03                  133 	ldhl	sp,	#3
+      000068 7E                     134 	ld	a, (hl)
+      000069 EAr00r00               135 	ld	(#_my_cpu),a
+                                    136 ;./C/romreset.c:28: reset_gameboy();
+                                    137 ;./C/romreset.c:30: }
+      00006C C3r6Fr00               138 	jp  _reset_gameboy
+                                    139 ;./C/romreset.c:32: void reset_gameboy() __naked {
+                                    140 ;	---------------------------------
+                                    141 ; Function reset_gameboy
+                                    142 ; ---------------------------------
+      00006F                        143 _reset_gameboy::
+                                    144 ;./C/romreset.c:36: __endasm;
+      00006F FAr00r00               145 	ld	a,(_my_cpu)
+      000072 C3 00 01               146 	jp	0x100
+                                    147 ;./C/romreset.c:37: }
+                                    148 	.area _RAMCODE
+                                    149 	.area _CABS (ABS)
