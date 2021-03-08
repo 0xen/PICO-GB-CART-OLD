@@ -11,24 +11,37 @@
 #include "hardware/gpio.h"
 
 
-extern const unsigned char bootloaderCode[];
+#define MAX_GAMES 10
+
+#define BANK_SIZE 0x4000
+
+#define RESET_PIN 28
+#define WR_PIN 27
+
+extern unsigned char bootloaderCode[];
 extern unsigned int bootloaderCodeSize;
 
 // ROMS
-extern const unsigned char TETRISCode[];
+extern unsigned char TETRISCode[];
 extern unsigned int TETRISCodeSize;
-extern const unsigned char DRMARIOCode[];
+extern unsigned char DRMARIOCode[];
 extern unsigned int DRMARIOCodeSize;
-extern const unsigned char SUPERMARIOLANDCode[];
+extern unsigned char SUPERMARIOLANDCode[];
 extern unsigned int SUPERMARIOLANDCodeSize;
-extern const unsigned char MARIOANDYOSHICode[];
+extern unsigned char MARIOANDYOSHICode[];
 extern unsigned int MARIOANDYOSHICodeSize;
+extern unsigned char ALSTARCHALLENGE2Code[];
+extern unsigned int ALSTARCHALLENGE2CodeSize;
+extern unsigned char pocketCode[];
+extern unsigned int pocketCodeSize;
+extern unsigned char ZELDACode[];
+extern unsigned int ZELDACodeSize;
 
 const uint16_t romCount = 3;
-const unsigned char* romInstances[] = {
+unsigned char* romInstances[] = {
     TETRISCode,
     DRMARIOCode,
-    SUPERMARIOLANDCode,
+    pocketCode
     
     //MARIOANDYOSHICode
 };
@@ -57,11 +70,6 @@ void MainMenu();
 void GameRunRomOnly();
 void GameRunMBC1();
 void GameRunMBC1AndRam();
-
-#define BANK_SIZE 0x4000
-
-#define RESET_PIN 28
-#define WR_PIN 27
 
 uint8_t* pMemoryBanks = NULL;
 
@@ -144,49 +152,8 @@ void LoadGame(uint8_t* data)
     }
     mRamBankSize = data[RAM_SIZE];
     mMBCType = data[CARTRIDGE_TYPE];
-	//if (mRamBankSize > 0)
-	//{
-    //    switch (mRamBankSize)
-	//    {
-	//    case 1:
-	//    	mRamSizeBytes = 1024 * 2;
-	//    	break;
-	//    case 2:
-	//    	mRamSizeBytes = 1024 * 8;
-	//    	break;
-	//    case 3:
-	//    	mRamSizeBytes = 1024 * 32;
-	//    	break;
-	//    case 4:
-	//    	mRamSizeBytes = 1024 * 128;
-	//    	break;
-	//    }
-	//	mRam = (uint8_t*) malloc(mRamSizeBytes);
-	//}
-
-    //uint32_t offset = 0;
-    //// Prepare the banks
-    //for(uint8_t i = 0 ; i < (mRomBankSize - 1); ++i)
-    //{
-    //    // Bank 0
-    //    for(uint32_t j = 0 ; j < BANK_SIZE; ++j)
-    //    {
-    //        pMemoryBanks[offset + j] = data[j];
-    //    }
-    //    offset+=BANK_SIZE;
-    //    // Bank 'n'
-    //    for(uint32_t k = 0 ; k < BANK_SIZE; ++k)
-    //    {
-    //        pMemoryBanks[offset + k] = data[(i + 1) * BANK_SIZE + k];
-    //    }
-    //    offset+=BANK_SIZE;
-    //}
 
     pMemoryBanks = data;
-    //for(uint32_t i = 0 ; i < BANK_SIZE * mRomBankSize; ++i)
-    //{
-    //    pMemoryBanks[i] = data[i];
-    //}
 
     switch(mMBCType)
     {
@@ -207,14 +174,14 @@ void SelectGame(uint8_t data)
 {  
     if(data >0 && data <= romCount)
     {
-        LoadGame(romInstances[data-1]);
+        LoadGame((uint8_t*)romInstances[data-1]);
         return;
     }
 }
 
 void LoadBootrom()
 {
-    pMemoryBanks = bootloaderCode;
+    pMemoryBanks = (uint8_t*)bootloaderCode;
 }
 
 void MainMenu()
@@ -224,6 +191,23 @@ void MainMenu()
     uint16_t address = 0;
     uint32_t outputData = 0;
     uint8_t* bankPtr = pMemoryBanks;
+    uint8_t data = 0;
+
+    static const uint8_t titleSize = 1 + (16 * MAX_GAMES);
+    uint8_t titles[titleSize];
+
+    {
+        titles[0] = romCount;
+        uint16_t offset = 1;
+        for(uint16_t i = 0 ; i < romCount; i++)
+        {
+            for(uint16_t j = 0 ; j < 16; j++)
+            {
+                titles[offset++] = romInstances[i][0x134 + j];
+            }
+        }
+    }
+
     ResetConsole();
     while(true)
     {   
@@ -239,8 +223,17 @@ void MainMenu()
 
                 outputData = 0;
 
-                outputData |= ((uint32_t)(pMemoryBanks[address]>>0)&0b1111111)<<16;
-                outputData |= ((uint32_t)(pMemoryBanks[address]>>7)&0b1)<<26;
+                if(address < 0x8000)
+                {
+                    data = pMemoryBanks[address];
+                }
+                else if(address >= 0xA000 && address <= 0xA000 + titleSize)
+                {
+                    data = titles[address-0xA000];
+                }
+
+                outputData |= ((uint32_t)(data>>0)&0b1111111)<<16;
+                outputData |= ((uint32_t)(data>>7)&0b1)<<26;
 
                 gpio_put_masked(dataPinMask, outputData);
             }
@@ -297,9 +290,9 @@ void GameRunMBC1()
     uint8_t* currentBank = pMemoryBanks; 
 
     uint8_t data = 0;
-    //uint8_t m_mode = 0;
-    uint8_t m_rom_bank_high = 0;
-    uint8_t m_memory_bank = 0;
+    uint8_t mode = 0;
+    uint8_t rom_bank_high = 0;
+    uint8_t memory_bank = 0;
 
     uint32_t bank_offset = 0;
     while(true)
@@ -336,47 +329,42 @@ void GameRunMBC1()
             {
                 case 0x2000:
                 {
-                    //if (m_mode == 0)
-                    //{
-                    //    m_memory_bank = (data & 0x1F) | (m_rom_bank_high << 5);
-                    //}
-                    //else
-                    //{
-                        m_memory_bank = data & 0x1f;
-                    //}
+                    if (mode == 0)
+                    {
+                        memory_bank = (data & 0x1F) | (rom_bank_high << 5);
+                    }
+                    else
+                    {
+                        memory_bank = data & 0x1f;
+                    }
                     // If rom bank is set to 0x00,0x20,0x40,0x60 we incroment it
+                    if (memory_bank == 0x00 || memory_bank == 0x20 ||
+                        memory_bank == 0x40 || memory_bank == 0x60)
+                        memory_bank++;
 
-                    //if (m_memory_bank == 0x00 || m_memory_bank == 0x20 ||
-                    //    m_memory_bank == 0x40 || m_memory_bank == 0x60)
-                    //    m_memory_bank++;
 
-
-                    m_memory_bank &= (mRomBankSize - 1);
+                    memory_bank &= (mRomBankSize - 1);
                     
-                    bank_offset = (m_memory_bank - 1) * 0x4000;
-                    //m_memory_bank--;
-
-                    //currentBank = &pMemoryBanks[0x8000 * m_memory_bank];
-                    //if(m_memory_bank==3)
-                    //{
-                    //    gpio_put(25,1);
-                    //}
-                    //while(true){}
+                    bank_offset = (memory_bank - 1) * 0x4000;
                     break;
                 }
                 case 0x4000:
                 {
-                    //m_rom_bank_high = data & 0x03;
-                    //m_memory_bank = (m_memory_bank & 0x1F) | (m_rom_bank_high << 5);
-                    //// If rom bank is set to 0x00,0x20,0x40,0x60 we incroment it
-                    ////if (m_memory_bank == 0x00 || m_memory_bank == 0x20 ||
-                    ////    m_memory_bank == 0x40 || m_memory_bank == 0x60)
-                    ////    m_memory_bank++;
-    //
-                    //m_memory_bank &= (mRomBankSize - 1);
-    //
-                    //// Load into memory bank 1
-                    //currentBank = &pMemoryBanks[0x8000 * m_memory_bank];
+                    rom_bank_high = data & 0x03;
+                    memory_bank = (memory_bank & 0x1F) | (rom_bank_high << 5);
+                    // If rom bank is set to 0x00,0x20,0x40,0x60 we incroment it
+                    if (memory_bank == 0x00 || memory_bank == 0x20 ||
+                        memory_bank == 0x40 || memory_bank == 0x60)
+                        memory_bank++;
+
+                    memory_bank &= (mRomBankSize - 1);
+
+                    bank_offset = (memory_bank - 1) * 0x4000;
+                    break;
+                }
+                case 0x6000: // Ram-Rom Mode
+                {
+		            mode = data & 0x01;
                     break;
                 }
             }

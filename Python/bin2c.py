@@ -8,7 +8,7 @@ def bin2c(filename, arrayName):
         
         sys.stdout.write("const unsigned int {:s}Size = {:d};\n".format(arrayName, f.tell()))
 
-        sys.stdout.write("const unsigned char {:s}[] = {{\n".format(arrayName))
+        sys.stdout.write("unsigned char {:s}[] = {{\n".format(arrayName))
         j = 0
         for i in data:
             sys.stdout.write("0x{:02x},".format(i))

@@ -116,9 +116,21 @@ void main()
 
     
     BackgroundPrintf( 8, 0, "Games" );
-    BackgroundPrintf( 1, 1, "Game 1" );
-    BackgroundPrintf( 1, 2, "Game 2" );
-    BackgroundPrintf( 1, 3, "Game 3" );
+
+    // Create a array to store game titles
+    char text[17];
+    text[16] = '\0';
+    UINT16 titleAddress = 0xA001;
+    UINT8 gameCount =  (*(UBYTE *)(0xA000));
+    // loop through 'n' games and display there titles
+    for(UINT8 i = 0 ; i < gameCount; ++i)
+    {
+        for(UINT8 j = 0 ; j < 16; ++j)
+        {
+            text[j] = (*(UBYTE *)(titleAddress++));
+        }
+        BackgroundPrintf( 1, 1 + i, text );
+    }
     RenderCursor();
 
 

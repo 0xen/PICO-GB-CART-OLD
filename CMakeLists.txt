@@ -36,6 +36,9 @@ Roms/ZELDA.c
 Roms/ALLEYWAY.c
 Roms/SUPERMARIOLAND.c
 Roms/MARIOANDYOSHI.c
+Roms/ALSTARCHALLENGE2.c
+Roms/pocket.c
+
 )
  
 set(headers
