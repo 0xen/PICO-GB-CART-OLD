@@ -1,0 +1,35 @@
+sudo apt install cmake gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-newlib -y
+sudo apt-get install g++ -y
+mkdir pico
+
+cd pico
+git clone https://github.com/raspberrypi/pico-sdk
+cd pico-sdk
+git submodule update --init
+mkdir build
+cd build
+cmake ..
+
+cd ~
+
+cd pico
+git clone https://github.com/raspberrypi/pico-examples
+cd pico-examples
+mkdir build
+cd build
+cmake .. -DPICO_SDK_PATH=../../pico-sdk/
+make
+
+
+cd ~
+
+cd pico
+cd temp
+mkdir build
+cd build
+cmake .. -DPICO_SDK_PATH=../../pico-sdk/
+make -j8
+
+
+
+sudo minicom -b 115200 -o -D /dev/ttyACM0
