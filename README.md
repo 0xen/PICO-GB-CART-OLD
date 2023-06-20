@@ -23,7 +23,7 @@ To get started with making the Pico code, you should follow the official getting
 To make a C copy of a game that can be linked to the Pico menu, simply add a .gb file into Roms/ and run the "GB2C.bat". After this you can add the GameBoy games to the CMake list and add them in the Pico code.
 
 # Updates
-Any updates for this project can be found over on my (Reddit)[https://www.reddit.com/user/LyneByLyne] 
+Any updates for this project can be found over on my [Reddit][https://www.reddit.com/user/LyneByLyne] 
 
 # Resources
 First a big thanks to HDR who has been working with me on making custom PCB's for this project. 
